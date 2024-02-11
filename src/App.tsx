@@ -1,7 +1,17 @@
+import { useState } from "react";
 import "./App.css";
+import UploadFile from "./components/UploadFile";
 
 const App = () => {
-  return <h1 className="text-red-600">App</h1>;
+  const [firstFileColumns, setFirstFileColumns] = useState<string[][]>([]);
+
+  console.log(firstFileColumns);
+
+  return (
+    <div>
+      <UploadFile setColumns={setFirstFileColumns} columns={firstFileColumns} />
+    </div>
+  );
 };
 
 export default App;
