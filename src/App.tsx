@@ -1,4 +1,5 @@
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useCallback, useEffect, useState } from "react";
+import { Workbook, Worksheet } from "exceljs";
 import "./App.css";
 import UploadFile from "./components/UploadFile";
 
@@ -15,8 +16,7 @@ const App = () => {
 
   const [selectedColumns, setSelectedColumns] = useState<string[][]>([]);
 
-  console.log(firstFileRows, "first");
-  console.log(secondFileRows, "second");
+  const [embodiedRows, setEmbodiedRows] = useState<string[]>([]);
 
   const firstSelect = firstFileColumns.map((column) => column[1]);
   const secondSelect = secondFileColumns.map((column) => column[1]);
@@ -41,7 +41,46 @@ const App = () => {
     }
   };
 
-  function exTest() {}
+  const generateExcel = useCallback(() => {
+    const filteredThead = [
+      ...firstFileRows[0].row,
+      ...secondFileRows[0].row,
+    ].filter((th) => th !== undefined);
+
+    const filteredRow = embodiedRows.filter((cell) => cell !== undefined);
+
+    const data = [filteredThead, filteredRow];
+
+    const workbook = new Workbook();
+
+    const worksheet: Worksheet = workbook.addWorksheet("Sheet1");
+
+    data.forEach((row) => {
+      worksheet.addRow(row);
+    });
+
+    workbook.xlsx.writeBuffer().then((buffer) => {
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "Embodied.xlsx";
+      document.body.appendChild(a);
+      a.click();
+
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    });
+  }, [embodiedRows, firstFileRows, secondFileRows]);
+
+  useEffect(() => {
+    if (embodiedRows.length > 0) {
+      generateExcel();
+    }
+  }, [embodiedRows.length, generateExcel]);
 
   const saveHandler = () => {
     if (selectedColumns[0] && selectedColumns[1]) {
@@ -67,18 +106,17 @@ const App = () => {
 
         const similarIndexes = [...firstColumnIndexes, ...secondColumnIndexes];
 
-        console.log(similarIndexes);
-
         const firstFindedRow = firstFileRows.find(
           ({ index }) => index === similarIndexes[0]
         );
 
         const secondFindedRow = secondFileRows.find(
-          ({ index }) => index === similarIndexes[0]
+          ({ index }) => index === similarIndexes[1]
         );
 
-        console.log(firstFindedRow);
-        console.log(secondFindedRow);
+        if (firstFindedRow && secondFindedRow) {
+          setEmbodiedRows([...firstFindedRow.row, ...secondFindedRow.row]);
+        }
       }
     }
   };
@@ -130,7 +168,6 @@ const App = () => {
       </div>
 
       <button onClick={saveHandler}>Save as excel</button>
-      <button onClick={exTest}>Write</button>
     </div>
   );
 };
