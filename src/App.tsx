@@ -1,15 +1,136 @@
-import { useState } from "react";
+import { ChangeEvent, useState } from "react";
 import "./App.css";
 import UploadFile from "./components/UploadFile";
 
 const App = () => {
   const [firstFileColumns, setFirstFileColumns] = useState<string[][]>([]);
+  const [secondFileColumns, setSecondFileColumns] = useState<string[][]>([]);
 
-  console.log(firstFileColumns);
+  const [firstFileRows, setFirstFileRows] = useState<
+    { row: string[]; index: number }[]
+  >([]);
+  const [secondFileRows, setSecondFileRows] = useState<
+    { row: string[]; index: number }[]
+  >([]);
+
+  const [selectedColumns, setSelectedColumns] = useState<string[][]>([]);
+
+  console.log(firstFileRows, "first");
+  console.log(secondFileRows, "second");
+
+  const firstSelect = firstFileColumns.map((column) => column[1]);
+  const secondSelect = secondFileColumns.map((column) => column[1]);
+
+  const changeFirstSelect = (e: ChangeEvent<HTMLSelectElement>) => {
+    const findedColumn = firstFileColumns.find(
+      (column) => column[1] === e.target.value
+    );
+
+    if (findedColumn) {
+      setSelectedColumns([...selectedColumns, findedColumn]);
+    }
+  };
+
+  const changeSecondSelect = (e: ChangeEvent<HTMLSelectElement>) => {
+    const findedColumn = secondFileColumns.find(
+      (column) => column[1] === e.target.value
+    );
+
+    if (findedColumn) {
+      setSelectedColumns([...selectedColumns, findedColumn]);
+    }
+  };
+
+  function exTest() {}
+
+  const saveHandler = () => {
+    if (selectedColumns[0] && selectedColumns[1]) {
+      const isEquals = selectedColumns[0].some((cell) =>
+        selectedColumns[1].includes(cell)
+      );
+
+      if (isEquals) {
+        const firstColumnIndexes: number[] = [];
+        const secondColumnIndexes: number[] = [];
+
+        selectedColumns[0].forEach((cell, index) => {
+          if (selectedColumns[1].includes(cell)) {
+            firstColumnIndexes.push(index);
+          }
+        });
+
+        selectedColumns[1].forEach((cell, index) => {
+          if (selectedColumns[0].includes(cell)) {
+            secondColumnIndexes.push(index);
+          }
+        });
+
+        const similarIndexes = [...firstColumnIndexes, ...secondColumnIndexes];
+
+        console.log(similarIndexes);
+
+        const firstFindedRow = firstFileRows.find(
+          ({ index }) => index === similarIndexes[0]
+        );
+
+        const secondFindedRow = secondFileRows.find(
+          ({ index }) => index === similarIndexes[0]
+        );
+
+        console.log(firstFindedRow);
+        console.log(secondFindedRow);
+      }
+    }
+  };
 
   return (
-    <div>
-      <UploadFile setColumns={setFirstFileColumns} columns={firstFileColumns} />
+    <div className="flex flex-col justify-center items-center">
+      <div className="flex flex-col gap-10">
+        <div className="flex gap-10">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="first-uploader">Select the first file</label>
+
+            <UploadFile
+              id="first-uploader"
+              setColumns={setFirstFileColumns}
+              columns={firstFileColumns}
+              setRows={setFirstFileRows}
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label htmlFor="second-uploader">Select the second file</label>
+
+            <UploadFile
+              id="second-uploader"
+              setColumns={setSecondFileColumns}
+              columns={secondFileColumns}
+              setRows={setSecondFileRows}
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-40">
+          <select className="w-40 bg-slate-300" onChange={changeFirstSelect}>
+            {firstSelect.map((title, i) => (
+              <option key={i} value={title}>
+                {title}
+              </option>
+            ))}
+          </select>
+
+          <select className="w-40 bg-slate-300" onChange={changeSecondSelect}>
+            {secondSelect.map((title, i) => (
+              <option key={i} value={title}>
+                {title}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <button onClick={saveHandler}>Save as excel</button>
+      <button onClick={exTest}>Write</button>
     </div>
   );
 };
