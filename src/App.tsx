@@ -150,6 +150,8 @@ const App = () => {
 
         <div className="flex gap-40">
           <select className="w-40 bg-slate-300" onChange={changeFirstSelect}>
+            <option value="Nothing">Nothing</option>
+
             {firstSelect.map((title, i) => (
               <option key={i} value={title}>
                 {title}
@@ -158,6 +160,8 @@ const App = () => {
           </select>
 
           <select className="w-40 bg-slate-300" onChange={changeSecondSelect}>
+            <option value="Nothing">Nothing</option>
+
             {secondSelect.map((title, i) => (
               <option key={i} value={title}>
                 {title}
@@ -167,7 +171,19 @@ const App = () => {
         </div>
       </div>
 
-      <button onClick={saveHandler}>Save as excel</button>
+      <button
+        className="border-2 border-solid text-blue-500 border-blue-500   p-5 rounded-md m-10"
+        onClick={saveHandler}
+      >
+        +
+      </button>
+
+      <button
+        className="bg-blue-500 text-white p-5 rounded-md m-10"
+        onClick={saveHandler}
+      >
+        Save as excel
+      </button>
     </div>
   );
 };
