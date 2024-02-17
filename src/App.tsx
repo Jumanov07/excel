@@ -373,36 +373,22 @@ const App = () => {
       )}
 
       <table>
-        {/* {selectedColumns.first.length && selectedColumns.second.length > 1 ? ( */}
-        <thead>
-          <tr className="flex justify-evenly">
-            <th className="font-medium flex-1">Source</th>
-            <th className="font-medium flex-2">Column name from source</th>
-            <th className="font-medium flex-1">Type</th>
-            <th className="font-medium flex-1">Additional text or formel</th>
-            <th className="font-medium flex-1">Target column name</th>
-          </tr>
-        </thead>
-        {/* ) : (
+        {selectedColumns.first.length && selectedColumns.second.length > 1 ? (
+          <thead>
+            <tr className="flex justify-evenly">
+              <th className="font-medium flex-1">Source</th>
+              <th className="font-medium flex-2">Column name from source</th>
+              <th className="font-medium flex-1">Type</th>
+              <th className="font-medium flex-1">Additional text or formel</th>
+              <th className="font-medium flex-1">Target column name</th>
+            </tr>
+          </thead>
+        ) : (
           ""
-        )} */}
+        )}
 
         <tbody className="flex flex-col justify-center items-center gap-5 mt-5">
-          {[
-            ...newColumns,
-            {
-              id: String(Math.random() * 100),
-              files,
-              columns: [],
-              types: ["Text", "Number"],
-            },
-            {
-              id: String(Math.random() * 100),
-              files,
-              columns: [],
-              types: ["Text", "Number"],
-            },
-          ].map((column, i) => (
+          {newColumns.map((column, i) => (
             <tr key={i} className="flex items-center">
               <td className="mr-10">{i + 1})</td>
 
