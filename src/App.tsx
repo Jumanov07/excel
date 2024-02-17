@@ -17,7 +17,13 @@ const App = () => {
     { row: string[]; index: number }[]
   >([]);
 
-  const [selectedColumns, setSelectedColumns] = useState<string[][]>([]);
+  const [selectedColumns, setSelectedColumns] = useState<{
+    first: string[];
+    second: string[];
+  }>({
+    first: [],
+    second: [],
+  });
 
   const [embodiedRows, setEmbodiedRows] = useState<string[]>([]);
 
@@ -34,6 +40,7 @@ const App = () => {
 
   const [value, setValue] = useState<{ [key: string]: string }>({});
   const [valueColumn, setValueColumn] = useState<{ [key: string]: string }>({});
+  const [type, setType] = useState("");
 
   const [currentColumn, setCurrentColumn] = useState("");
 
@@ -51,7 +58,10 @@ const App = () => {
     );
 
     if (findedColumn) {
-      setSelectedColumns([...selectedColumns, findedColumn]);
+      setSelectedColumns({
+        first: findedColumn,
+        second: selectedColumns.second,
+      });
     }
   };
 
@@ -61,7 +71,10 @@ const App = () => {
     );
 
     if (findedColumn) {
-      setSelectedColumns([...selectedColumns, findedColumn]);
+      setSelectedColumns({
+        first: selectedColumns.first,
+        second: findedColumn,
+      });
     }
   };
 
@@ -107,15 +120,20 @@ const App = () => {
       current.map((row) => {
         if (row.index !== 1) {
           if (debounceValue) {
-            row.row[+currentColumn] =
-              row.row[+currentColumn] + ` ${debounceValue}`;
+            if (type === "Text") {
+              row.row[+currentColumn] =
+                row.row[+currentColumn] + ` ${debounceValue}`;
+            } else {
+              row.row[+currentColumn] =
+                row.row[+currentColumn] + +debounceValue;
+            }
           }
         }
 
         return row;
       })
     );
-  }, [currentColumn, debounceValue]);
+  }, [debounceValue]);
 
   useEffect(() => {
     const current =
@@ -197,23 +215,23 @@ const App = () => {
   }, [embodiedRows.length, generateExcel]);
 
   const saveHandler = () => {
-    if (selectedColumns[0] && selectedColumns[1]) {
-      const isEquals = selectedColumns[0].some((cell) =>
-        selectedColumns[1].includes(cell)
+    if (selectedColumns.first.length && selectedColumns.second.length) {
+      const isEquals = selectedColumns.first.some((cell) =>
+        selectedColumns.second.includes(cell)
       );
 
       if (isEquals) {
         const firstColumnIndexes: number[] = [];
         const secondColumnIndexes: number[] = [];
 
-        selectedColumns[0].forEach((cell, index) => {
-          if (selectedColumns[1].includes(cell)) {
+        selectedColumns.first.forEach((cell, index) => {
+          if (selectedColumns.second.includes(cell)) {
             firstColumnIndexes.push(index);
           }
         });
 
-        selectedColumns[1].forEach((cell, index) => {
-          if (selectedColumns[0].includes(cell)) {
+        selectedColumns.second.forEach((cell, index) => {
+          if (selectedColumns.first.includes(cell)) {
             secondColumnIndexes.push(index);
           }
         });
@@ -266,161 +284,210 @@ const App = () => {
       };
 
       setNewColumns([...newColumns, column]);
-
-      setValue({});
-      setValueColumn({});
     } else {
       alert(`Only ${allColumns.length} columns!`);
     }
   };
 
-  const changeColumn = (e: ChangeEvent<HTMLSelectElement>) => {
+  const changeColumn = (e: ChangeEvent<HTMLSelectElement>) =>
     setCurrentColumn(e.target.value);
-  };
+
+  const changeType = (e: ChangeEvent<HTMLSelectElement>) =>
+    setType(e.target.value);
 
   return (
-    <div className="flex flex-col justify-center items-center">
-      <div className="flex flex-col gap-10">
-        <div className="flex gap-10">
-          <div className="flex flex-col gap-2">
-            <label htmlFor="first-uploader">Select the first file</label>
+    <div className="flex flex-col pl-40 pr-40">
+      <div className="flex justify-center">
+        <div className="flex justify-center items-center flex-col gap-10 w-fit">
+          <div className="flex gap-10">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="first-uploader">Select the first file</label>
 
-            <UploadFile
-              id="first-uploader"
-              setColumns={setFirstFileColumns}
-              columns={firstFileColumns}
-              setRows={setFirstFileRows}
-              files={files}
-              setFiles={setFiles}
-            />
+              <UploadFile
+                id="first-uploader"
+                setColumns={setFirstFileColumns}
+                columns={firstFileColumns}
+                setRows={setFirstFileRows}
+                files={files}
+                setFiles={setFiles}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label htmlFor="second-uploader">Select the second file</label>
+
+              <UploadFile
+                id="second-uploader"
+                setColumns={setSecondFileColumns}
+                columns={secondFileColumns}
+                setRows={setSecondFileRows}
+                files={files}
+                setFiles={setFiles}
+              />
+            </div>
           </div>
 
-          <div className="flex flex-col gap-2">
-            <label htmlFor="second-uploader">Select the second file</label>
+          <div className="flex w-full">
+            <div style={{ flex: 0.71 }}>
+              <select
+                className="w-40 border border-solid border-black bg-white rounded-md p-2"
+                onChange={changeFirstSelect}
+              >
+                <option value="Nothing">Nothing</option>
 
-            <UploadFile
-              id="second-uploader"
-              setColumns={setSecondFileColumns}
-              columns={secondFileColumns}
-              setRows={setSecondFileRows}
-              files={files}
-              setFiles={setFiles}
-            />
+                {firstSelect.map((title, i) => (
+                  <option key={i} value={title}>
+                    {title}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <select
+              className="w-40 border border-solid border-black bg-white rounded-md p-2"
+              onChange={changeSecondSelect}
+            >
+              <option value="Nothing">Nothing</option>
+
+              {secondSelect.map((title, i) => (
+                <option key={i} value={title}>
+                  {title}
+                </option>
+              ))}
+            </select>
           </div>
-        </div>
-
-        <div className="flex gap-40">
-          <select className="w-40 bg-slate-300" onChange={changeFirstSelect}>
-            <option value="Nothing">Nothing</option>
-
-            {firstSelect.map((title, i) => (
-              <option key={i} value={title}>
-                {title}
-              </option>
-            ))}
-          </select>
-
-          <select className="w-40 bg-slate-300" onChange={changeSecondSelect}>
-            <option value="Nothing">Nothing</option>
-
-            {secondSelect.map((title, i) => (
-              <option key={i} value={title}>
-                {title}
-              </option>
-            ))}
-          </select>
         </div>
       </div>
 
-      {selectedColumns.length > 1 ? (
-        <>
+      {selectedColumns.first.length && selectedColumns.second.length > 1 ? (
+        <div className="w-full flex justify-end mt-10 mb-5">
           <button
-            className="border-2 border-solid text-blue-500 border-blue-500   p-5 rounded-md m-10"
+            className="bg-white font-bold text-blue-500 border-2 border-solid border-blue-500 p-3 pl-5 pr-5  rounded-md"
             onClick={addColumn}
           >
             +
           </button>
-
-          <div className="flex gap-20">
-            <p>Source</p>
-            <p>Column</p>
-            <p>Type</p>
-            <p>Add text</p>
-            <p>Change column</p>
-          </div>
-        </>
+        </div>
       ) : (
         ""
       )}
 
-      <div className="flex flex-col gap-5">
-        {newColumns.map((column, i) => (
-          <div key={i} className="flex gap-5">
-            <p>{i + 1}</p>
+      <table>
+        {/* {selectedColumns.first.length && selectedColumns.second.length > 1 ? ( */}
+        <thead>
+          <tr className="flex justify-evenly">
+            <th className="font-medium flex-1">Source</th>
+            <th className="font-medium flex-2">Column name from source</th>
+            <th className="font-medium flex-1">Type</th>
+            <th className="font-medium flex-1">Additional text or formel</th>
+            <th className="font-medium flex-1">Target column name</th>
+          </tr>
+        </thead>
+        {/* ) : (
+          ""
+        )} */}
 
-            <select
-              className="bg-gray-300"
-              onChange={changeFile}
-              id={column.id}
-            >
-              <option value="Nothing">Nothing</option>
+        <tbody className="flex flex-col justify-center items-center gap-5 mt-5">
+          {[
+            ...newColumns,
+            {
+              id: String(Math.random() * 100),
+              files,
+              columns: [],
+              types: ["Text", "Number"],
+            },
+            {
+              id: String(Math.random() * 100),
+              files,
+              columns: [],
+              types: ["Text", "Number"],
+            },
+          ].map((column, i) => (
+            <tr key={i} className="flex items-center">
+              <td className="mr-10">{i + 1})</td>
 
-              {column.files.map((file, i) => (
-                <option value={i} key={i}>
-                  {file}
-                </option>
-              ))}
-            </select>
+              <td className="mr-10">
+                <select
+                  className="border border-solid border-black bg-white rounded-md p-2"
+                  onChange={changeFile}
+                  id={column.id}
+                >
+                  <option value="Nothing">Nothing</option>
 
-            <select className="bg-gray-300" onChange={changeColumn}>
-              <option value="Nothing">Nothing</option>
+                  {column.files.map((file, i) => (
+                    <option value={i} key={i}>
+                      {file}
+                    </option>
+                  ))}
+                </select>
+              </td>
 
-              {column.columns.map((column, i) => (
-                <option value={i + 1} key={i}>
-                  {column}
-                </option>
-              ))}
-            </select>
+              <td className="mr-16">
+                <select
+                  className="w-52 border border-solid border-black bg-white rounded-md p-2"
+                  onChange={changeColumn}
+                >
+                  <option value="Nothing">Nothing</option>
 
-            <select className="bg-gray-300">
-              <option value="Nothing">Nothing</option>
+                  {column.columns.map((column, i) => (
+                    <option value={i + 1} key={i}>
+                      {column}
+                    </option>
+                  ))}
+                </select>
+              </td>
 
-              {column.types.map((type, i) => (
-                <option value={type} key={i}>
-                  {type}
-                </option>
-              ))}
-            </select>
+              <td className="mr-6">
+                <select
+                  className="border border-solid border-black bg-white rounded-md p-2"
+                  onChange={changeType}
+                >
+                  <option value="Nothing">Nothing</option>
 
-            <input
-              type="text"
-              className="bg-slate-300"
-              placeholder="change cell"
-              value={value[i] || ""}
-              onChange={(e) => changeInput(e, i.toString())}
-            />
+                  {column.types.map((type, i) => (
+                    <option value={type} key={i}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+              </td>
 
-            <input
-              type="text"
-              className="bg-slate-300"
-              placeholder="change column name"
-              value={valueColumn[i] || ""}
-              onChange={(e) => changeInputColumn(e, i.toString())}
-            />
-          </div>
-        ))}
+              <td className="mr-10">
+                <input
+                  className="w-50 border border-solid border-black bg-white rounded-md p-2 text-black placeholder:text-black"
+                  type={type === "Number" ? "number" : "text"}
+                  placeholder={`Write you ${
+                    type === "Number" ? "number..." : "text..."
+                  }`}
+                  value={value[i] || ""}
+                  onChange={(e) => changeInput(e, i.toString())}
+                />
+              </td>
+
+              <td>
+                <input
+                  className="w-40 border border-solid border-black bg-white rounded-md p-2 text-black placeholder:text-black"
+                  type="text"
+                  placeholder="Write your text..."
+                  value={valueColumn[i] || ""}
+                  onChange={(e) => changeInputColumn(e, i.toString())}
+                />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div className="w-full flex justify-end mt-10">
+        <button
+          className="bg-blue-500 text-white p-3 pl-5 pr-5  rounded-md"
+          onClick={saveHandler}
+        >
+          Save as excel
+        </button>
       </div>
-
-      <button
-        className="bg-blue-500 text-white p-5 rounded-md m-10"
-        onClick={saveHandler}
-      >
-        Save as excel
-      </button>
     </div>
   );
 };
 
 export default App;
-
-

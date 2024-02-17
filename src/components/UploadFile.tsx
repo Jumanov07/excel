@@ -3,7 +3,7 @@ import { Workbook } from "exceljs";
 
 interface Props extends InputHTMLAttributes<HTMLInputElement> {
   setColumns: (columns: string[][]) => void;
-  setRows: (rows: { row: string[]; index: number }[]) => void; // Обновляем типизацию для setRows
+  setRows: (rows: { row: string[]; index: number }[]) => void;
   columns: string[][];
   files: string[];
   setFiles: (files: string[]) => void;
