@@ -5,9 +5,18 @@ interface Props extends InputHTMLAttributes<HTMLInputElement> {
   setColumns: (columns: string[][]) => void;
   setRows: (rows: { row: string[]; index: number }[]) => void; // Обновляем типизацию для setRows
   columns: string[][];
+  files: string[];
+  setFiles: (files: string[]) => void;
 }
 
-const UploadFile = ({ setColumns, setRows, columns, ...rest }: Props) => {
+const UploadFile = ({
+  setColumns,
+  setRows,
+  columns,
+  files,
+  setFiles,
+  ...rest
+}: Props) => {
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -24,6 +33,8 @@ const UploadFile = ({ setColumns, setRows, columns, ...rest }: Props) => {
           const newRows: { row: string[]; index: number }[] = [];
 
           workbook.eachSheet((sheet) => {
+            setFiles([...files, sheet.name]);
+
             for (let i = 0; i < sheet.actualColumnCount; i++) {
               const column = sheet.getColumn(i + 1)?.values;
 
