@@ -32,9 +32,10 @@ const UploadFile = ({
           const newColumns: string[][] = [];
           const newRows: { row: string[]; index: number }[] = [];
 
-          workbook.eachSheet((sheet) => {
-            setFiles([...files, sheet.name]);
+          const fileName = file.name;
+          setFiles([...files, fileName]);
 
+          workbook.eachSheet((sheet) => {
             for (let i = 0; i < sheet.actualColumnCount; i++) {
               const column = sheet.getColumn(i + 1)?.values;
 

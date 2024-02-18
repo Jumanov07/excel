@@ -25,7 +25,9 @@ const App = () => {
     second: [],
   });
 
-  const [embodiedRows, setEmbodiedRows] = useState<string[]>([]);
+  const [embodiedRows, setEmbodiedRows] = useState<
+    { id: string; value: string }[]
+  >([]);
 
   const [newColumns, setNewColumns] = useState<
     {
@@ -37,17 +39,20 @@ const App = () => {
   >([]);
 
   const [files, setFiles] = useState<string[]>([]);
+  const [columnId, setColumnId] = useState<string>("");
 
   const [value, setValue] = useState<{ [key: string]: string }>({});
   const [valueColumn, setValueColumn] = useState<{ [key: string]: string }>({});
-  const [type, setType] = useState("");
-
-  const [currentColumn, setCurrentColumn] = useState("");
+  const [type, setType] = useState<{ [key: string]: string }>({});
 
   const [index, setIndex] = useState("");
   const [indexColumn, setIndexColumn] = useState("");
+  const [typeIndex, setTypeIndex] = useState("");
 
   const [currentFile, setCurrentFile] = useState("0");
+  const [currentColumns, setCurrentColumns] = useState<
+    { id: string; value: string }[]
+  >([]);
 
   const firstSelect = firstFileColumns.map((column) => column[1]);
   const secondSelect = secondFileColumns.map((column) => column[1]);
@@ -102,30 +107,14 @@ const App = () => {
   const [debounceValue] = useDebounce(value[+index], 2000);
 
   useEffect(() => {
-    const current =
-      currentFile === "0"
-        ? firstFileRows
-        : currentFile === "1"
-        ? secondFileRows
-        : [];
-
-    const currentSet =
-      currentFile === "0"
-        ? setFirstFileRows
-        : currentFile === "1"
-        ? setSecondFileRows
-        : setFirstFileRows;
-
-    currentSet(
-      current.map((row) => {
-        if (row.index !== 1) {
+    setEmbodiedRows(
+      embodiedRows.map((row) => {
+        if (columnId === row.id) {
           if (debounceValue) {
-            if (type === "Text") {
-              row.row[+currentColumn] =
-                row.row[+currentColumn] + ` ${debounceValue}`;
+            if (type[typeIndex] === "Text") {
+              row.value = row.value + ` ${debounceValue}`;
             } else {
-              row.row[+currentColumn] =
-                row.row[+currentColumn] + +debounceValue;
+              row.value = row.value + +debounceValue;
             }
           }
         }
@@ -136,42 +125,29 @@ const App = () => {
   }, [debounceValue]);
 
   useEffect(() => {
-    const current =
-      currentFile === "0"
-        ? firstFileRows
-        : currentFile === "1"
-        ? secondFileRows
-        : [];
-
-    const currentSet =
-      currentFile === "0"
-        ? setFirstFileRows
-        : currentFile === "1"
-        ? setSecondFileRows
-        : setFirstFileRows;
-
-    currentSet(
-      current.map((row) => {
-        if (row.index === 1) {
+    setCurrentColumns(
+      currentColumns.map((row) => {
+        if (row.id === columnId) {
           if (debounceValueColumn) {
-            row.row[+currentColumn] = debounceValueColumn;
+            row.value = debounceValueColumn;
           }
         }
 
         return row;
       })
     );
-  }, [currentColumn, debounceValueColumn]);
+  }, [debounceValueColumn]);
 
   const allColumns = [...firstFileColumns, ...secondFileColumns];
 
   const generateExcel = useCallback(() => {
-    const filteredThead = [
-      ...firstFileRows[0].row,
-      ...secondFileRows[0].row,
-    ].filter((th) => th !== undefined);
+    const filteredThead = currentColumns
+      .map((column) => column.value)
+      .filter((th) => th !== undefined);
 
-    const filteredRow = embodiedRows.filter((cell) => cell !== undefined);
+    const filteredRow = embodiedRows
+      .map((row) => row.value)
+      .filter((cell) => cell !== undefined);
 
     const data = [filteredThead, filteredRow];
 
@@ -208,48 +184,23 @@ const App = () => {
     });
   }, [embodiedRows, firstFileRows, secondFileRows]);
 
-  useEffect(() => {
-    if (embodiedRows.length > 0) {
-      generateExcel();
-    }
-  }, [embodiedRows.length, generateExcel]);
+  const isEquals = selectedColumns.first.some((cell) =>
+    selectedColumns.second.includes(cell)
+  );
 
   const saveHandler = () => {
     if (selectedColumns.first.length && selectedColumns.second.length) {
-      const isEquals = selectedColumns.first.some((cell) =>
-        selectedColumns.second.includes(cell)
-      );
-
       if (isEquals) {
-        const firstColumnIndexes: number[] = [];
-        const secondColumnIndexes: number[] = [];
-
-        selectedColumns.first.forEach((cell, index) => {
-          if (selectedColumns.second.includes(cell)) {
-            firstColumnIndexes.push(index);
-          }
-        });
-
-        selectedColumns.second.forEach((cell, index) => {
-          if (selectedColumns.first.includes(cell)) {
-            secondColumnIndexes.push(index);
-          }
-        });
-
-        const similarIndexes = [...firstColumnIndexes, ...secondColumnIndexes];
-
-        const firstFindedRow = firstFileRows.find(
-          ({ index }) => index === similarIndexes[0]
-        );
-
-        const secondFindedRow = secondFileRows.find(
-          ({ index }) => index === similarIndexes[1]
-        );
-
-        if (firstFindedRow && secondFindedRow) {
-          setEmbodiedRows([...firstFindedRow.row, ...secondFindedRow.row]);
+        if (embodiedRows.length > 0) {
+          generateExcel();
+        } else {
+          alert("Selected columns!");
         }
+      } else {
+        alert("There are none like it!");
       }
+    } else {
+      alert("Selected files!");
     }
   };
 
@@ -280,7 +231,7 @@ const App = () => {
         id: String(Math.random() * 100),
         files,
         columns: [],
-        types: ["Text", "Number"],
+        types: ["Text", "Formel"],
       };
 
       setNewColumns([...newColumns, column]);
@@ -289,11 +240,98 @@ const App = () => {
     }
   };
 
-  const changeColumn = (e: ChangeEvent<HTMLSelectElement>) =>
-    setCurrentColumn(e.target.value);
+  const changeColumn = (e: ChangeEvent<HTMLSelectElement>) => {
+    const index = e.target.value;
+    const columnId = e.target.id;
 
-  const changeType = (e: ChangeEvent<HTMLSelectElement>) =>
-    setType(e.target.value);
+    setColumnId(columnId);
+
+    const current = {
+      id: columnId,
+      value:
+        currentFile === "1"
+          ? secondFileRows[0].row[+index]
+          : currentFile === "0"
+          ? firstFileRows[0].row[+index]
+          : "",
+    };
+
+    const updatedColumns = [...currentColumns];
+
+    const columnIndex = updatedColumns.findIndex(
+      (column) => column.id === current.id
+    );
+
+    if (columnIndex !== -1) {
+      updatedColumns[columnIndex] = current;
+    } else {
+      updatedColumns.push(current);
+    }
+
+    setCurrentColumns(updatedColumns);
+
+    const firstColumnIndexes: number[] = [];
+    const secondColumnIndexes: number[] = [];
+
+    selectedColumns.first.forEach((cell, index) => {
+      if (selectedColumns.second.includes(cell)) {
+        firstColumnIndexes.push(index);
+      }
+    });
+
+    selectedColumns.second.forEach((cell, index) => {
+      if (selectedColumns.first.includes(cell)) {
+        secondColumnIndexes.push(index);
+      }
+    });
+
+    const similarIndexes = [...firstColumnIndexes, ...secondColumnIndexes];
+
+    const firstFindedRow = firstFileRows.find(
+      ({ index }) => index === similarIndexes[0]
+    );
+
+    const secondFindedRow = secondFileRows.find(
+      ({ index }) => index === similarIndexes[1]
+    );
+
+    if (firstFindedRow && secondFindedRow) {
+      const current = {
+        id: columnId,
+        value:
+          currentFile === "1"
+            ? secondFindedRow.row[+index]
+            : currentFile === "0"
+            ? firstFindedRow.row[+index]
+            : "",
+      };
+
+      const updatedColumns = [...embodiedRows];
+
+      const columnIndex = updatedColumns.findIndex(
+        (column) => column.id === current.id
+      );
+
+      if (columnIndex !== -1) {
+        updatedColumns[columnIndex] = current;
+      } else {
+        updatedColumns.push(current);
+      }
+
+      setEmbodiedRows(updatedColumns);
+    }
+  };
+
+  const changeType = (e: ChangeEvent<HTMLSelectElement>, i: string) => {
+    const newValue = e.target.value;
+
+    setType((prevState) => ({
+      ...prevState,
+      [i]: newValue,
+    }));
+
+    setTypeIndex(i);
+  };
 
   return (
     <div className="flex flex-col pl-40 pr-40">
@@ -359,7 +397,9 @@ const App = () => {
         </div>
       </div>
 
-      {selectedColumns.first.length && selectedColumns.second.length > 1 ? (
+      {selectedColumns.first.length &&
+      selectedColumns.second.length > 1 &&
+      isEquals ? (
         <div className="w-full flex justify-end mt-10 mb-5">
           <button
             className="bg-white font-bold text-blue-500 border-2 border-solid border-blue-500 p-3 pl-5 pr-5  rounded-md"
@@ -373,7 +413,9 @@ const App = () => {
       )}
 
       <table>
-        {selectedColumns.first.length && selectedColumns.second.length > 1 ? (
+        {selectedColumns.first.length &&
+        selectedColumns.second.length > 1 &&
+        isEquals ? (
           <thead>
             <tr className="flex justify-evenly">
               <th className="font-medium flex-1">Source</th>
@@ -412,6 +454,7 @@ const App = () => {
                 <select
                   className="w-52 border border-solid border-black bg-white rounded-md p-2"
                   onChange={changeColumn}
+                  id={column.id}
                 >
                   <option value="Nothing">Nothing</option>
 
@@ -426,7 +469,7 @@ const App = () => {
               <td className="mr-6">
                 <select
                   className="border border-solid border-black bg-white rounded-md p-2"
-                  onChange={changeType}
+                  onChange={(e) => changeType(e, i.toString())}
                 >
                   <option value="Nothing">Nothing</option>
 
@@ -441,9 +484,9 @@ const App = () => {
               <td className="mr-10">
                 <input
                   className="w-50 border border-solid border-black bg-white rounded-md p-2 text-black placeholder:text-black"
-                  type={type === "Number" ? "number" : "text"}
-                  placeholder={`Write you ${
-                    type === "Number" ? "number..." : "text..."
+                  type={"text"}
+                  placeholder={`Write your ${
+                    type[i] === "Formel" ? "formel..." : "text..."
                   }`}
                   value={value[i] || ""}
                   onChange={(e) => changeInput(e, i.toString())}
