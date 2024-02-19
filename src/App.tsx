@@ -3,7 +3,6 @@ import { ChangeEvent, useCallback, useEffect, useState } from "react";
 import { Workbook, Worksheet } from "exceljs";
 import "./App.css";
 import UploadFile from "./components/UploadFile";
-import { useDebounce } from "use-debounce";
 
 const App = () => {
   const [firstFileColumns, setFirstFileColumns] = useState<string[][]>([]);
@@ -103,18 +102,15 @@ const App = () => {
     setIndexColumn(i);
   };
 
-  const [debounceValueColumn] = useDebounce(valueColumn[+indexColumn], 2000);
-  const [debounceValue] = useDebounce(value[+index], 2000);
-
   useEffect(() => {
     setEmbodiedRows(
       embodiedRows.map((row) => {
         if (columnId === row.id) {
-          if (debounceValue) {
+          if (value[+index]) {
             if (type[typeIndex] === "Text") {
-              row.value = row.value + ` ${debounceValue}`;
+              row.value = row.value + ` ${value[+index]}`;
             } else {
-              row.value = row.value + +debounceValue;
+              row.value = row.value + +value[+index];
             }
           }
         }
@@ -122,21 +118,21 @@ const App = () => {
         return row;
       })
     );
-  }, [debounceValue]);
+  }, [value[+index]]);
 
   useEffect(() => {
     setCurrentColumns(
       currentColumns.map((row) => {
         if (row.id === columnId) {
-          if (debounceValueColumn) {
-            row.value = debounceValueColumn;
+          if (valueColumn[+indexColumn]) {
+            row.value = valueColumn[+indexColumn];
           }
         }
 
         return row;
       })
     );
-  }, [debounceValueColumn]);
+  }, [valueColumn[+indexColumn]]);
 
   const allColumns = [...firstFileColumns, ...secondFileColumns];
 
