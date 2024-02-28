@@ -3,6 +3,7 @@ import { ChangeEvent, useCallback, useEffect, useState } from "react";
 import { Workbook, Worksheet } from "exceljs";
 import "./App.css";
 import UploadFile from "./components/UploadFile";
+import { useDebounce } from "use-debounce";
 
 const App = () => {
   const [firstFileColumns, setFirstFileColumns] = useState<string[][]>([]);
@@ -102,15 +103,17 @@ const App = () => {
     setIndexColumn(i);
   };
 
+  const [debounceValue] = useDebounce(value[+index], 2000);
+
   useEffect(() => {
     setEmbodiedRows(
       embodiedRows.map((row) => {
         if (columnId === row.id) {
-          if (value[+index]) {
+          if (debounceValue) {
             if (type[typeIndex] === "Text") {
-              row.value = row.value + ` ${value[+index]}`;
+              row.value = row.value + ` ${debounceValue}`;
             } else {
-              row.value = row.value + +value[+index];
+              row.value = row.value + +debounceValue;
             }
           }
         }
@@ -118,7 +121,7 @@ const App = () => {
         return row;
       })
     );
-  }, [value[+index]]);
+  }, [debounceValue]);
 
   useEffect(() => {
     setCurrentColumns(

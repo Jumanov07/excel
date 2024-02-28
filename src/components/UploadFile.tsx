@@ -33,7 +33,6 @@ const UploadFile = ({
           const newRows: { row: string[]; index: number }[] = [];
 
           const fileName = file.name;
-          setFiles([...files, fileName]);
 
           workbook.eachSheet((sheet) => {
             for (let i = 0; i < sheet.actualColumnCount; i++) {
@@ -49,6 +48,7 @@ const UploadFile = ({
             });
           });
 
+          setFiles([...files, fileName]);
           setColumns([...columns, ...newColumns]);
           setRows(newRows);
         });
